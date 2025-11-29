@@ -30,6 +30,7 @@ async function run() {
 
     const db = client.db('bongoCart_DB');
     const fashionCollection = db.collection('fashionCollection');
+    const orderCollection = db.collection('orderCollection');
 
     // Latest 6 products
     app.get('/latest_fashion', async (req, res) => {
@@ -73,13 +74,34 @@ async function run() {
       res.send(result);
     });
 
+    // Order Collection APis
+    app.post('/fashionOrders', async (req, res) => {
+      const newOrder = req.body;
+      const result = await orderCollection.insertOne(newOrder);
+      res.send(result);
+    });
+
+    // Personal Order Get Apis
+    app.get('/fashionOrders', async (req, res) => {
+      const email = req.query.email;
+      const result = await orderCollection.find({ email: email }).toArray();
+      res.send(result);
+    });
+
     // add Products Track Apis
 
     app.get('/addProducts', async (req, res) => {
-      const email = req.query.email;
-      const result = await fashionCollection.find({ email: email }).toArray();
-      console.log(result);
-      res.send(result);
+      try {
+        const email = req.query.email;
+        if (!email)
+          return res.status(400).send({ message: 'Email query is required' });
+
+        const result = await fashionCollection.find({ email }).toArray();
+        res.status(200).send(result);
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: 'Failed to fetch products' });
+      }
     });
 
     // update APis
